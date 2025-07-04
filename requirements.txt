@@ -6,4 +6,4 @@ langchain-groq
 pypdf
 sentence-transformers
 streamlit
-sqlite3>=3.35
+sqlite3
