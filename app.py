@@ -33,7 +33,7 @@ if 'memory' not in st.session_state:
     st.session_state.memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
 
 if 'embeddings' not in st.session_state:
-    st.session_state.embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
+    st.session_state.embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2", model_kwargs={"device":"cpu"})
 
 if 'messages' not in st.session_state:
     st.session_state.messages = []
