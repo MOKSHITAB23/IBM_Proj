@@ -1,4 +1,3 @@
-import torch
 from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
@@ -36,8 +35,7 @@ if 'memory' not in st.session_state:
 if 'embeddings' not in st.session_state:
     st.session_state.embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-mpnet-base-v2",
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True}
+        model_kwargs={"device": "cpu"}
     )
 
 if 'messages' not in st.session_state:
