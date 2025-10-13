@@ -1,7 +1,7 @@
-from langchain.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.memory import ConversationBufferMemory
 from langchain.chains.retrieval import create_retrieval_chain
@@ -33,7 +33,11 @@ if 'memory' not in st.session_state:
     st.session_state.memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
 
 if 'embeddings' not in st.session_state:
-    st.session_state.embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2", model_kwargs={"device": "cpu"})
+    st.session_state.embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-mpnet-base-v2",
+        model_kwargs={"device": "cpu", "torch_dtype": torch.float32},
+        encode_kwargs={"normalize_embeddings": True}
+    )
 
 if 'messages' not in st.session_state:
     st.session_state.messages = []
