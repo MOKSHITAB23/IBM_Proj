@@ -36,7 +36,7 @@ if 'memory' not in st.session_state:
 if 'embeddings' not in st.session_state:
     st.session_state.embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-mpnet-base-v2",
-        model_kwargs={"device": "cpu", "torch_dtype": torch.float32},
+        model_kwargs={"device": "cpu"},
         encode_kwargs={"normalize_embeddings": True}
     )
 
