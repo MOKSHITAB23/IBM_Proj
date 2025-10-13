@@ -64,7 +64,7 @@ def ask_question(question, chain):
     )
     return response["answer"]
 
-st.title("PDF QnA Assistant (FAISS Edition)")
+st.title("PDF QnA Assistant")
 
 file = st.file_uploader("Upload a PDF to start chatting!", type=["pdf"])
 
