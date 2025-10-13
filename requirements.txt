@@ -6,4 +6,3 @@ pypdf
 sentence-transformers
 streamlit
 faiss-cpu
-torch
