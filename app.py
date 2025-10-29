@@ -1,10 +1,10 @@
 from langchain_community.vectorstores import FAISS
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
+from langchain.chains import create_retrieval_chain
 from langchain.memory import ConversationBufferMemory
-from langchain.chains.retrieval import create_retrieval_chain
 from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
 from dotenv import load_dotenv
 import os
@@ -16,7 +16,10 @@ load_dotenv()
 
 if 'llm' not in st.session_state:
     apikey = os.getenv("GROQ_API_KEY")
-    st.session_state.llm = ChatGroq(model="llama-3.1-8b-instant", api_key=apikey)
+    st.session_state.llm = ChatGroq(
+        model="llama-3.1-8b-instant",
+        api_key=apikey
+    )
 
 if 'prompt' not in st.session_state:
     st.session_state.prompt = ChatPromptTemplate.from_messages([
@@ -30,7 +33,10 @@ if 'prompt' not in st.session_state:
     ])
 
 if 'memory' not in st.session_state:
-    st.session_state.memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
+    st.session_state.memory = ConversationBufferMemory(
+        return_messages=True,
+        memory_key="chat_history"
+    )
 
 if 'embeddings' not in st.session_state:
     st.session_state.embeddings = HuggingFaceEmbeddings(
@@ -44,12 +50,25 @@ if 'messages' not in st.session_state:
 def create_chain(pdf_path):
     loader = PyPDFLoader(pdf_path)
     documents = loader.load()
-    splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=300)
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=800,
+        chunk_overlap=300
+    )
     docs = splitter.split_documents(documents)
+
     vectorstore = FAISS.from_documents(docs, embedding=st.session_state.embeddings)
     retriever = vectorstore.as_retriever()
-    document_chain = create_stuff_documents_chain(llm=st.session_state.llm, prompt=st.session_state.prompt)
-    chain = create_retrieval_chain(retriever=retriever, combine_docs_chain=document_chain)
+
+    document_chain = create_stuff_documents_chain(
+        llm=st.session_state.llm,
+        prompt=st.session_state.prompt
+    )
+
+    chain = create_retrieval_chain(
+        retriever=retriever,
+        combine_docs_chain=document_chain
+    )
     return chain
 
 def ask_question(question, chain):
