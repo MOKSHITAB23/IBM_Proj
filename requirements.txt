@@ -1,9 +1,8 @@
-langchain
-langchain-community
+langchain==0.3.27
+langchain-community==0.3.2
 langchain-core
 langchain-groq
 pypdf
 sentence-transformers
 streamlit
-langchain-text-splitters
 faiss-cpu
