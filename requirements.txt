@@ -6,7 +6,7 @@ langchain-text-splitters==0.3.2
 
 # LLM providers
 langchain-groq==0.2.1
-
+langchain-huggingface==0.1.2
 # Embeddings and vector stores
 sentence-transformers==3.3.1
 faiss-cpu==1.9.0
