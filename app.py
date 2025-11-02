@@ -50,41 +50,54 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
 
 def create_chain(pdf_path):
     """Create RAG chain from PDF"""
-    # Load and split PDF
-    loader = PyPDFLoader(pdf_path)
-    documents = loader.load()
+    try:
+        # Load and split PDF
+        loader = PyPDFLoader(pdf_path)
+        documents = loader.load()
+        
+        if not documents:
+            raise ValueError("No content could be extracted from the PDF")
+        
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=800, 
+            chunk_overlap=300
+        )
+        docs = splitter.split_documents(documents)
+        
+        if not docs:
+            raise ValueError("No text chunks created from the PDF")
+        
+        st.info(f"✅ Loaded {len(documents)} pages, created {len(docs)} text chunks")
+        
+        # Create vector store
+        vectorstore = FAISS.from_documents(docs, embedding=st.session_state.embeddings)
+        retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+        
+        # Create chains
+        document_chain = create_stuff_documents_chain(
+            llm=st.session_state.llm, 
+            prompt=st.session_state.prompt
+        )
+        
+        retrieval_chain = create_retrieval_chain(
+            retriever=retriever, 
+            combine_docs_chain=document_chain
+        )
+        
+        # Wrap with message history
+        chain_with_history = RunnableWithMessageHistory(
+            retrieval_chain,
+            get_session_history,
+            input_messages_key="input",
+            history_messages_key="chat_history",
+            output_messages_key="answer"
+        )
+        
+        return chain_with_history
     
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=800, 
-        chunk_overlap=300
-    )
-    docs = splitter.split_documents(documents)
-    
-    # Create vector store
-    vectorstore = FAISS.from_documents(docs, embedding=st.session_state.embeddings)
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
-    
-    # Create chains
-    document_chain = create_stuff_documents_chain(
-        llm=st.session_state.llm, 
-        prompt=st.session_state.prompt
-    )
-    
-    retrieval_chain = create_retrieval_chain(
-        retriever=retriever, 
-        combine_docs_chain=document_chain
-    )
-    
-    # Wrap with message history
-    chain_with_history = RunnableWithMessageHistory(
-        retrieval_chain,
-        get_session_history,
-        input_messages_key="input",
-        history_messages_key="chat_history",
-        output_messages_key="answer"
-    )
-    
-    return chain_with_history
+    except Exception as e:
+        st.error(f"Error creating chain: {str(e)}")
+        raise
 
 def ask_question(question, chain):
     """Ask a question using the RAG chain with history"""
