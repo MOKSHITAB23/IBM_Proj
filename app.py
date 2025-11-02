@@ -16,7 +16,6 @@ import streamlit as st
 
 load_dotenv()
 
-# Initialize session state variables
 if 'llm' not in st.session_state:
     apikey = os.getenv("GROQ_API_KEY")
     st.session_state.llm = ChatGroq(model="llama-3.1-8b-instant", api_key=apikey)
@@ -49,9 +48,7 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
     return st.session_state.store[session_id]
 
 def create_chain(pdf_path):
-    """Create RAG chain from PDF"""
     try:
-        # Load and split PDF
         loader = PyPDFLoader(pdf_path)
         documents = loader.load()
         
@@ -69,11 +66,9 @@ def create_chain(pdf_path):
         
         st.info(f"✅ Loaded {len(documents)} pages, created {len(docs)} text chunks")
         
-        # Create vector store
         vectorstore = FAISS.from_documents(docs, embedding=st.session_state.embeddings)
         retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
         
-        # Create chains
         document_chain = create_stuff_documents_chain(
             llm=st.session_state.llm, 
             prompt=st.session_state.prompt
@@ -84,7 +79,6 @@ def create_chain(pdf_path):
             combine_docs_chain=document_chain
         )
         
-        # Wrap with message history
         chain_with_history = RunnableWithMessageHistory(
             retrieval_chain,
             get_session_history,
@@ -100,20 +94,17 @@ def create_chain(pdf_path):
         raise
 
 def ask_question(question, chain):
-    """Ask a question using the RAG chain with history"""
     response = chain.invoke(
         {"input": question},
         config={"configurable": {"session_id": "pdf_chat_session"}}
     )
     return response["answer"]
 
-# Streamlit UI
 st.title("📄 PDF QnA Assistant")
 
 file = st.file_uploader("Upload a PDF to start chatting!", type=["pdf"])
 
 if file:
-    # Create or update chain when new file is uploaded
     if 'chain' not in st.session_state or st.session_state.get('file_name') != file.name:
         with st.spinner("Reading PDF..."):
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp:
@@ -123,30 +114,24 @@ if file:
             st.session_state.chain = create_chain(path)
             st.session_state.file_name = file.name
             st.session_state.messages = []
-            st.session_state.store = {}  # Reset chat history for new PDF
+            st.session_state.store = {}
             
-            # Clean up temp file
             os.unlink(path)
         
         st.success(f"✅ Loaded PDF: {file.name}")
     
-    # Display chat history
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
     
-    # Chat input
     if prompt := st.chat_input("Ask me anything about the PDF..."):
-        # Add user message
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        # Get assistant response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 response = ask_question(prompt, st.session_state.chain)
             st.markdown(response)
         
-        # Add assistant message
         st.session_state.messages.append({"role": "assistant", "content": response})
